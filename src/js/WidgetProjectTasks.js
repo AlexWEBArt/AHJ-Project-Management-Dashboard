@@ -7,6 +7,8 @@ export default class ProjectTasks {
     renderTask(id) {
       const tasks = this.creatingTaskObject(id)
 
+      document.querySelectorAll('.list-item-task').forEach(item => item.remove())
+
       tasks.forEach(item => this.renderTaskNote(item))
     }
   
@@ -17,7 +19,7 @@ export default class ProjectTasks {
         const liName = document.createElement('LI');
         const paragraphName = document.createElement('P');
     
-        listItem.classList.add('list-item');
+        listItem.classList.add('list-item-task');
         listItem.setAttribute('id', item.id);
 
         liStatus.classList.add('status');

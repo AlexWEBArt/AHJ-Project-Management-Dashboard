@@ -1,11 +1,12 @@
 export default class ProjectStats {
-    constructor(conteiner, dataBase) {
+    constructor(conteiner) {
       this.container = conteiner;
-      this.dataBase = dataBase;
     }
 
-    renderStats() {
-        const objStats = this.creatingStateObject()
+    renderStats(db) {
+        const objStats = this.creatingStateObject(db)
+
+        document.querySelectorAll('.list-item-stat').forEach(item => item.remove())
 
         objStats.forEach(item => this.renderStatNote(item))
     }
@@ -17,7 +18,7 @@ export default class ProjectStats {
         const liCount = document.createElement('LI');
         const paragraphCount = document.createElement('P');
     
-        listItem.classList.add('list-item');
+        listItem.classList.add('list-item-stat');
         listItem.setAttribute('id', item.id);
     
         liName.classList.add('name');
@@ -36,8 +37,8 @@ export default class ProjectStats {
         liCount.append(paragraphCount);
     }
 
-    creatingStateObject() {
-        return this.dataBase.projects.map(item => {
+    creatingStateObject(db) {
+        return db.projects.map(item => {
             const count = item.tasks.filter(item => item.done === false).length
             const { id, name} = item;
             return { id, name, count }

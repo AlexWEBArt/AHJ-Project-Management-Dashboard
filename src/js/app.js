@@ -19,16 +19,14 @@ const startDb = storage.load();
 const statsContainer = document.querySelector('.container-stats');
 const tasksContainer = document.querySelector('.container-tasks');
 
-const statsFactory = new ProjectStats(statsContainer, startDb);
+const statsFactory = new ProjectStats(statsContainer);
 const tasksFactory = new ProjectTasks(tasksContainer, startDb);
 
 const taskId = 2
 
-statsFactory.renderStats()
+statsFactory.renderStats(startDb)
 tasksFactory.renderTask(taskId)
 document.querySelector('.title-active-task').textContent = 'Frontend'
-
-// const selectItem = document.querySelector('.title-active-task')
 
 const ACTIONS = {
     ClickOpenSelect: 'OPENSELECT',
@@ -52,55 +50,59 @@ function reduce(state, action) {
     }
 }
 
-// const taskClick$ = fromEvent(selectItem, 'click')
+let el
 
-const selectTask = () => {
+const chekListener = () => {
+    const statusBoxes = document.querySelectorAll('.task-status');
+
+    statusBoxes.forEach(item => item.addEventListener('click', (e) => {
+        const statusItem = e.target
+        el = e.target
+        if (statusItem.getAttribute('status') === 'false') {
+            store.completeTask()
+        } else {
+            store.openTask()
+        }
+            
+    }))
+}
+
+const selectTaskMenu = () => {
     if (!document.querySelector('.select-container')) {
         const activeTask = document.querySelector('.title-active-task')
         const selectContainer = document.createElement('DIV');
         selectContainer.classList.add('select-container');
 
         startDb.projects.map(item => {if (item.name !== activeTask.textContent) {return item.name}}).forEach(item => {
-            const paragraph = document.createElement('P');
-            paragraph.classList.add('select-paragraph')
-            paragraph.textContent = item
-            selectContainer.append(paragraph)
+            if (item) {
+                const paragraph = document.createElement('P');
+                paragraph.classList.add('select-paragraph')
+                paragraph.textContent = item
+
+                paragraph.addEventListener('click', (e) => {
+                    const taskName = e.target.textContent
+                    activeTask.textContent = taskName
+
+                    const taskId = storage.loadTaskId(taskName)
+                    tasksFactory.renderTask(taskId)
+
+                    chekListener()
+
+                    store.closeSelect()
+                })
+                selectContainer.append(paragraph)
+            }
         })
 
         tasksContainer.prepend(selectContainer)
-    } else {
-        // document.querySelector('.select-container').remove()
     }
 }
 
-const completeTask = (el) => {
-    // const status = document.querySelector('.task-status')
-    // console.log(status.getAttribute('status'))
-    console.log(el.getAttribute('status'))
-    if (el.getAttribute('status') === 'false') {
-        console.log(el.getAttribute('status'))
-        
-        el.setAttribute('status', false);
-        el.textContent = '';
-    } else {
-        // console.log(el.getAttribute('status'))
-        el.setAttribute('status', true);
-        el.textContent = '\u2713';
-        
-    }
-}
-
-// taskClick$.subscribe(selectTask)
-
-const startStatus = (directionId, taskId) => {
-    const task = startDb.projects.filter(item => item.id === directionId)[0].tasks.filter(item => item.id === taskId)[0].done
-    console.log(task)
-}
-
-startStatus(1,6)
+// storage.removeStorage()
 
 class Store {
     constructor() {
+        this.tasksList = storage.load
         this.actions$ = new Subject();
         this.stateSelect$ = this.actions$.asObservable().pipe(
             startWith({ type: 'INITIALIZATION'}),
@@ -138,7 +140,7 @@ class Store {
 const store = new Store();
 
 const selectMenu = document.querySelector('.title-active-task');
-const statusBoxes = document.querySelectorAll('.task-status');
+
 
 selectMenu.addEventListener('click', () => {
     if (!document.querySelector('.select-container')) {
@@ -148,23 +150,7 @@ selectMenu.addEventListener('click', () => {
     }
 })
 
-let el
 
-statusBoxes.forEach(item => item.addEventListener('click', (e) => {
-    const statusItem = e.target
-    el = e.target
-    if (statusItem.getAttribute('status') === 'false') {
-        // console.log(statusItem.getAttribute('status'))
-        // el.setAttribute('status', false);
-        // el.textContent = '';
-        store.openTask()
-    } else {
-        // el.setAttribute('status', true);
-        // el.textContent = '';
-        store.completeTask()
-    }
-        
-}))
 
 store.stateSelect$
     .pipe(
@@ -172,7 +158,7 @@ store.stateSelect$
     ).subscribe(value => {
         console.log(value)
         if (value.select) {
-            selectTask()
+            selectTaskMenu()
         } else {
             if (document.querySelector('.select-container')) {
                 document.querySelector('.select-container').remove()
@@ -182,24 +168,26 @@ store.stateSelect$
 
 store.stateStatus$
     .pipe(
-        // distinctUntilChanged()
+        distinctUntilChanged()
     ).subscribe(value => {
         if (el) {
-            const taskId = el.closest('.list-item').getAttribute('id')
-            if (!value.status) {
-                console.log(value.status)
-                el.setAttribute('status', false);
-                el.textContent = '';
-
-                storage.saveStatus(taskId, value.status)
-                console.log(JSON.parse(localStorage.getItem('data')))
-            } else {
+            const taskId = el.closest('.list-item-task').getAttribute('id')
+            if (value.status) {
                 console.log(value.status)
                 el.setAttribute('status', true);
                 el.textContent = '\u2713';
                 
                 storage.saveStatus(taskId, value.status)
-                console.log(JSON.parse(localStorage.getItem('data')))
+
+                statsFactory.renderStats(storage.load())
+            } else {
+                console.log(value.status)
+                el.setAttribute('status', false);
+                el.textContent = '';
+
+                storage.saveStatus(taskId, value.status)
+
+                statsFactory.renderStats(storage.load())
             }
         }
     })

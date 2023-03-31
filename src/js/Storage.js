@@ -158,18 +158,15 @@ export default class Storage {
 
   saveStatus(id ,status) {
     const db = this.load()
-    console.log({id, status})
-    const change = db.projects.forEach(item => {
-      
+
+    db.projects.forEach(item => {
       item.tasks.forEach(item => {
         if(item.id == id) {
-          console.log(item)
           item.done = status
-          console.log(item)
         }})
     })
-    console.log(db)
-    this.storage.setItem('data', JSON.stringify(change));
+
+    this.storage.setItem('data', JSON.stringify(db));
   }
 
   load() {
@@ -180,23 +177,17 @@ export default class Storage {
     }
   }
 
-  // statusChange(id, status) {
-  //   const data = this.load();
-  //   for (const item in data) {
-  //     if (item === id) {
-  //       data[item].status = status;
-  //     }
-  //   }
-  //   this.save(data);
-  // }
+  loadTaskId(name) {
+    const db = this.load()
+    try {
+      const taskId = db.projects.filter(item => item.name === name)[0].id
+      return taskId;
+    } catch (e) {
+      throw new Error('Invalid data');
+    }
+  }
 
-  // removeTicket(id) {
-  //   const data = this.load();
-  //   for (const item in data) {
-  //     if (item === id) {
-  //       delete data[item];
-  //     }
-  //   }
-  //   this.save(data);
-  // }
+  removeStorage() {
+    this.storage.clear()
+  }
 }
