@@ -1,7 +1,10 @@
 export default class ProjectTasks {
-  constructor(conteiner, dataBase) {
+  constructor(conteiner, store, storage) {
     this.container = conteiner;
-    this.dataBase = dataBase;
+    this.storage = storage;
+    this.store = store;
+
+    this._checkComplete = this.checkComplete.bind(this);
   }
 
   renderTask(id) {
@@ -30,6 +33,8 @@ export default class ProjectTasks {
       statusBox.textContent = '\u2713';
     }
 
+    statusBox.addEventListener('click', this._checkComplete);
+
     liName.classList.add('name');
     paragraphName.classList.add('name-title');
 
@@ -42,7 +47,18 @@ export default class ProjectTasks {
     liName.append(paragraphName);
   }
 
+  checkComplete(e) {
+    const statusItem = e.target;
+
+    if (statusItem.getAttribute('status') === 'false') {
+      this.store.completeTask(statusItem);
+    } else {
+      this.store.openTask(statusItem);
+    }
+  }
+
   creatingTaskObject(id) {
-    return this.dataBase.projects.filter((item) => item.id === id)[0].tasks;
+    const dataBase = this.storage.load();
+    return dataBase.projects.filter((item) => item.id === id)[0].tasks;
   }
 }
